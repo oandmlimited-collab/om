@@ -47,7 +47,7 @@ body {
   line-height: 1.6;
   color: var(--ink);
   background: var(--navy-950);
-  overflow-x: hidden;
+  overflow-x: clip;
   -webkit-font-smoothing: antialiased;
 }
 img { max-width: 100%; display: block; }
@@ -574,8 +574,8 @@ body.mo-open .mo-panel { transform: none; opacity: 1; pointer-events: auto; }
 @keyframes dropPulse { 50% { transform: scale(1.12); } }
 
 /* ---------- Reveal ---------- */
-.reveal { opacity: 0; transform: translateY(32px); transition: opacity .9s var(--ease-out), transform .9s var(--ease-out); transition-delay: var(--d, 0s); }
-.reveal.in { opacity: 1; transform: none; }
+.js-ready .reveal { opacity: 0; transform: translateY(32px); transition: opacity .9s var(--ease-out), transform .9s var(--ease-out); transition-delay: var(--d, 0s); }
+.js-ready .reveal.in, .reveal.in { opacity: 1; transform: none; }
 .no-js .reveal { opacity: 1; transform: none; }
 
 /* ---------- Admin ---------- */
@@ -641,7 +641,7 @@ table.data tr:hover td { background: rgba(255,255,255,.03); }
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; scroll-behavior: auto !important; }
-  .reveal { opacity: 1; transform: none; }
+  .reveal, .js-ready .reveal { opacity: 1 !important; transform: none !important; }
   .hero h1 .line > span { transform: none; }
 }
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
@@ -685,4 +685,56 @@ label.chip:has(input:focus-visible) { outline: 2px solid var(--cyan-400); outlin
   .speech { max-width: 220px; font-size: .85rem; top: -6%; }
   .mo-launcher { width: 62px; height: 62px; } .mo-launcher svg { width: 46px; height: 46px; }
   .whatsapp-float { width: 50px; height: 50px; }
+}
+
+/* ===== Device responsiveness hardening ===== */
+html { overflow-x: clip; }
+/* grid/flex children may shrink below their content width (prevents sideways scroll) */
+.hero-grid > *, .quote-grid > *, .mo-feature > *, .product-hero > *, .footer-grid > *, .bento > *,
+.sectors > *, .stats > *, .process > *, .founder-grid > *, .values > *, .product-grid > *, .form-row > * { min-width: 0; }
+.footer-grid a, .contact-card a, .msg, .review blockquote { overflow-wrap: anywhere; }
+/* rings and glows scale with the space available */
+.hero-ring.r1 { width: min(460px, 100%); height: auto; aspect-ratio: 1; }
+.hero-ring.r2 { width: min(340px, 74%); height: auto; aspect-ratio: 1; }
+.hero-glow { width: min(320px, 70%); height: auto; aspect-ratio: 1; }
+.mo-feature .bot-wrap .hero-ring.r1 { width: min(320px, 100%); }
+.hero-stage, .mo-feature .bot-wrap { max-width: 100%; }
+/* comfortable touch targets on touch screens */
+@media (pointer: coarse) {
+  .text-link { min-height: 44px; }
+  .tray-clear { min-height: 44px; padding: 0 .4rem; }
+  .chip { min-height: 40px; }
+  .main-nav a:not(.btn) { min-height: 48px; display: flex; align-items: center; }
+  .swatch { width: 44px; height: 44px; }
+  .icon-btn { width: 42px; height: 42px; }
+}
+/* tablets: two-up layouts where there's room */
+@media (min-width: 601px) and (max-width: 900px) {
+  .founder-grid, .values { grid-template-columns: repeat(2, 1fr); }
+  .product-hero .product-stage { min-height: 360px; }
+  .hero-stage { min-height: 440px; }
+}
+/* very small phones */
+@media (max-width: 360px) {
+  .container { width: calc(100% - 1.6rem); }
+  .btn { padding: 0 1.1rem; font-size: .92rem; }
+  .hero-actions .btn { width: 100%; }
+  .form-card { padding: 1.1rem; }
+  .news-form { flex-direction: column; border-radius: 18px; }
+  .news-form input { padding: .7rem .9rem; }
+  .tabs { border-radius: 18px; }
+  .stat b { font-size: 1.8rem; }
+}
+/* landscape phones: keep Mo's chat usable */
+@media (max-height: 520px) and (orientation: landscape) {
+  .mo-panel { height: calc(100dvh - 1rem); bottom: .5rem; }
+  .hero-stage { min-height: 300px; }
+}
+/* notch / home-indicator safe areas */
+.whatsapp-float { left: max(1.2rem, env(safe-area-inset-left)); bottom: max(1.2rem, env(safe-area-inset-bottom)); }
+.mo-launcher { right: max(1.2rem, env(safe-area-inset-right)); bottom: max(1.2rem, env(safe-area-inset-bottom)); }
+@media (max-width: 420px) {
+  .contact-card a { font-size: .9rem; overflow-wrap: normal; word-break: normal; }
+  .eyebrow { font-size: .7rem; letter-spacing: .08em; }
+  .site-footer { padding-bottom: 6rem; }
 }

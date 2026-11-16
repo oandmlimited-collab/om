@@ -82,6 +82,9 @@ const io = "IntersectionObserver" in window ? new IntersectionObserver(entries =
   io.unobserve(en.target);
 }), { threshold: .12, rootMargin: "0px 0px -40px 0px" }) : null;
 $$(".reveal").forEach(el => io ? io.observe(el) : el.classList.add("in"));
+document.documentElement.classList.add("js-ready"); // only now may content start hidden-for-animation
+// failsafe: anything already on screen (or above it) shows immediately
+requestAnimationFrame(() => $$(".reveal").forEach(el => { if (el.getBoundingClientRect().top < innerHeight) el.classList.add("in"); }));
 function countUp(el) {
   const to = +el.dataset.count; if (reduced) { el.textContent = to; return; }
   const t0 = performance.now(), d = 1400;
@@ -408,6 +411,6 @@ $("#trayClear")?.addEventListener("click", () => { list = []; renderTray(); });
 renderTray();
 
 // ---------------------------------------------------------------- Mo AI
-initMo();
+try { initMo(); } catch (e) { console.error("[OM] Mo AI failed to start", e); }
 
 // PWA-ish: nothing cached on purpose (always fresh deploys). Manifest only.

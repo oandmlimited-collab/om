@@ -3,7 +3,10 @@
 // Lazily loads only the Firebase products a page actually uses, and degrades
 // gracefully when Firebase isn't configured yet ("offline mode").
 // =============================================================
-import { firebaseConfig, services } from "../firebase-config.js";
+// Load the config defensively: a typo in firebase-config.js must never break the website.
+let firebaseConfig = {}, services = {};
+try { ({ firebaseConfig = {}, services = {} } = await import("../firebase-config.js?v=2.0.1")); }
+catch (e) { console.error("[OM] firebase-config.js has an error — running in offline mode until it's fixed.", e); }
 
 const SDK = "https://www.gstatic.com/firebasejs/13.3.0";
 const load = name => import(`${SDK}/firebase-${name}.js`);
