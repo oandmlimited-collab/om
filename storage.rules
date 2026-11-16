@@ -1,0 +1,19 @@
+rules_version = '2';
+// OM Ltd — Cloud Storage rules
+// Visitors may upload up to 8 MB images/PDFs into quote-uploads/{ref}/ but can never read or list them.
+service firebase.storage {
+  match /b/{bucket}/o {
+    function isAdmin() {
+      return request.auth != null &&
+        firestore.exists(/databases/(default)/documents/admins/$(request.auth.uid));
+    }
+    match /quote-uploads/{ref}/{file} {
+      allow create: if request.resource.size < 8 * 1024 * 1024
+                    && request.resource.contentType.matches('image/(jpeg|png|webp)|application/pdf')
+                    && ref.matches('OM-[A-Z0-9]{6,12}');
+      allow read, delete: if isAdmin();
+      allow update: if false;
+    }
+    match /{allPaths=**} { allow read, write: if false; }
+  }
+}

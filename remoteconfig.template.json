@@ -1,0 +1,8 @@
+{
+  "parameters": {
+    "announcement_text": { "defaultValue": { "value": "Smart water solutions · Reliable supply · Professional service" }, "description": "Top announcement bar text", "valueType": "STRING" },
+    "mo_ai_enabled": { "defaultValue": { "value": "true" }, "description": "Turn Mo AI's Gemini brain on/off without redeploying", "valueType": "BOOLEAN" },
+    "mo_ai_model": { "defaultValue": { "value": "gemini-3.5-flash-lite" }, "description": "Gemini model used by Mo AI", "valueType": "STRING" },
+    "mo_ai_greeting": { "defaultValue": { "value": "" }, "description": "Optional custom first message from Mo (markdown-lite)", "valueType": "STRING" }
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "name": "OM Ltd — Quality Water Solutions",
+  "short_name": "OM Ltd",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#030a1f",
+  "theme_color": "#030a1f",
+  "icons": [
+    { "src": "assets/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "assets/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

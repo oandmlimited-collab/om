@@ -1,0 +1,13 @@
+{
+  "projects": {
+    "default": "portifolio-app-1125c"
+  },
+  "targets": {
+    "portifolio-app-1125c": {
+      "hosting": {
+        "om-services-site": ["om-services"]
+      }
+    }
+  },
+  "etags": {}
+}

@@ -1,0 +1,6 @@
+.firebase/
+_backup_v1/
+*-firebase-adminsdk-*.json
+service-account*.json
+firebase-debug.log
+node_modules/

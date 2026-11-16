@@ -1,0 +1,20 @@
+# Publishes the OM Ltd site to Firebase Hosting every time files change on GitHub.
+# One-time setup (no command line): add a repository secret named FIREBASE_SERVICE_ACCOUNT
+# containing the JSON key from Firebase Console → Project settings → Service accounts → Generate new private key.
+name: Deploy OM Ltd to Firebase Hosting
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          projectId: portifolio-app-1125c
+          target: om-services-site
+          channelId: live

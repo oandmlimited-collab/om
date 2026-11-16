@@ -1,0 +1,97 @@
+rules_version = '2';
+// =============================================================
+// OM Ltd — Cloud Firestore security rules
+// Public visitors can only CREATE well-formed documents. Only team members
+// listed in /admins/{uid} can read or manage data.
+// =============================================================
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isAdmin() {
+      return request.auth != null && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+    function isStr(v, min, max) { return v is string && v.size() >= min && v.size() <= max; }
+    function optStr(d, k, max) { return !(k in d) || (d[k] is string && d[k].size() <= max); }
+    function validEmail(e) { return isStr(e, 5, 254) && e.matches('^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$'); }
+    function nowish() { return request.resource.data.createdAt == request.time; }
+
+    // ---- Team list (managed in the Firebase Console) ----
+    match /admins/{uid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow write: if false;
+    }
+
+    // ---- Quotation requests ----
+    match /quotationRequests/{id} {
+      allow create: if
+        request.resource.data.keys().hasOnly(['ref','name','company','email','phone','service','location','budget','details','consent','attachments','status','source','page','userAgent','createdAt']) &&
+        request.resource.data.keys().hasAll(['name','email','phone','service','details','consent','status','createdAt']) &&
+        isStr(request.resource.data.name, 2, 120) &&
+        validEmail(request.resource.data.email) &&
+        isStr(request.resource.data.phone, 7, 40) &&
+        isStr(request.resource.data['service'], 2, 120) &&
+        isStr(request.resource.data.details, 3, 5000) &&
+        optStr(request.resource.data, 'company', 120) &&
+        optStr(request.resource.data, 'location', 120) &&
+        optStr(request.resource.data, 'budget', 60) &&
+        optStr(request.resource.data, 'ref', 20) &&
+        optStr(request.resource.data, 'page', 120) &&
+        optStr(request.resource.data, 'userAgent', 200) &&
+        (!('attachments' in request.resource.data) || (request.resource.data.attachments is list && request.resource.data.attachments.size() <= 3)) &&
+        request.resource.data.consent == true &&
+        request.resource.data.status == 'new' &&
+        nowish();
+      allow read, delete: if isAdmin();
+      allow update: if isAdmin() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','updatedAt','updatedBy','notes']);
+    }
+
+    // ---- Newsletter ----
+    match /newsletterSubscribers/{id} {
+      allow create: if
+        request.resource.data.keys().hasOnly(['email','name','interests','source','status','consent','createdAt']) &&
+        validEmail(request.resource.data.email) &&
+        optStr(request.resource.data, 'name', 60) &&
+        request.resource.data.interests is list && request.resource.data.interests.size() <= 6 &&
+        request.resource.data.status == 'active' &&
+        request.resource.data.consent == true &&
+        nowish();
+      allow read, update, delete: if isAdmin();
+    }
+    match /newsletterUnsubscribes/{id} {
+      allow create: if
+        request.resource.data.keys().hasOnly(['email','reason','createdAt']) &&
+        validEmail(request.resource.data.email) &&
+        optStr(request.resource.data, 'reason', 300) &&
+        nowish();
+      allow read, delete: if isAdmin();
+    }
+    match /newsletterCampaigns/{id} {
+      allow read, write: if isAdmin();
+    }
+    // Outbound email queue for the "Trigger Email from Firestore" extension
+    match /mail/{id} {
+      allow read, create: if isAdmin();
+      allow update, delete: if false; // the extension uses the Admin SDK
+    }
+
+    // ---- Testimonials / reviews ----
+    match /testimonials/{id} {
+      allow read: if resource.data.approved == true || isAdmin();
+      allow create: if
+        request.resource.data.keys().hasOnly(['name','org','service','message','rating','consent','approved','createdAt']) &&
+        isStr(request.resource.data.name, 2, 80) &&
+        optStr(request.resource.data, 'org', 80) &&
+        optStr(request.resource.data, 'service', 80) &&
+        isStr(request.resource.data.message, 10, 1200) &&
+        request.resource.data.rating is int && request.resource.data.rating >= 1 && request.resource.data.rating <= 5 &&
+        request.resource.data.consent == true &&
+        request.resource.data.approved == false &&
+        nowish();
+      allow update: if isAdmin() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['approved','reviewedBy','reviewedAt']);
+      allow delete: if isAdmin();
+    }
+
+    // Everything else is closed.
+    match /{document=**} { allow read, write: if false; }
+  }
+}
