@@ -3,28 +3,117 @@
     "target": "om-services-site",
     "public": ".",
     "ignore": [
-      "firebase.json", "**/.*", "**/node_modules/**", "README.md", "*.rules",
-      "firestore.indexes.json", "remoteconfig.template.json", "package*.json", "_backup*/**", "_build/**"
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**",
+      "README.md",
+      "*.rules",
+      "firestore.indexes.json",
+      "remoteconfig.template.json",
+      "package*.json",
+      "_backup*/**",
+      "_build/**"
     ],
     "cleanUrls": true,
     "trailingSlash": false,
     "headers": [
-      { "source": "**/*.@(png|jpg|jpeg|webp|svg|ico)", "headers": [{ "key": "Cache-Control", "value": "public,max-age=604800" }] },
-      { "source": "**/*.@(js|css)", "headers": [{ "key": "Cache-Control", "value": "public,max-age=3600" }] },
-      { "source": "**", "headers": [
-        { "key": "X-Content-Type-Options", "value": "nosniff" },
-        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
-        { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=()" },
-        { "key": "X-Frame-Options", "value": "SAMEORIGIN" }
-      ]},
-      { "source": "/admin", "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }] }
+      {
+        "source": "**/*.html",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "no-cache"
+          }
+        ]
+      },
+      {
+        "source": "/",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "no-cache"
+          }
+        ]
+      },
+      {
+        "source": "/@(merch|founders|testimonials|newsletter|admin)",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "no-cache"
+          }
+        ]
+      },
+      {
+        "source": "**/*.@(png|jpg|jpeg|webp|svg|ico)",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "public,max-age=604800"
+          }
+        ]
+      },
+      {
+        "source": "**/*.@(js|css)",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "public,max-age=3600"
+          }
+        ]
+      },
+      {
+        "source": "**",
+        "headers": [
+          {
+            "key": "X-Content-Type-Options",
+            "value": "nosniff"
+          },
+          {
+            "key": "Referrer-Policy",
+            "value": "strict-origin-when-cross-origin"
+          },
+          {
+            "key": "Permissions-Policy",
+            "value": "camera=(), microphone=(), geolocation=()"
+          },
+          {
+            "key": "X-Frame-Options",
+            "value": "SAMEORIGIN"
+          }
+        ]
+      },
+      {
+        "source": "/admin",
+        "headers": [
+          {
+            "key": "X-Robots-Tag",
+            "value": "noindex, nofollow"
+          }
+        ]
+      }
     ],
     "redirects": [
-      { "source": "/shop", "destination": "/merch", "type": 301 },
-      { "source": "/reviews", "destination": "/testimonials", "type": 301 }
+      {
+        "source": "/shop",
+        "destination": "/merch",
+        "type": 301
+      },
+      {
+        "source": "/reviews",
+        "destination": "/testimonials",
+        "type": 301
+      }
     ]
   },
-  "firestore": { "rules": "firestore.rules", "indexes": "firestore.indexes.json" },
-  "storage": { "rules": "storage.rules" },
-  "remoteconfig": { "template": "remoteconfig.template.json" }
+  "firestore": {
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  },
+  "storage": {
+    "rules": "storage.rules"
+  },
+  "remoteconfig": {
+    "template": "remoteconfig.template.json"
+  }
 }

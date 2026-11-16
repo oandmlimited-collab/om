@@ -738,3 +738,9 @@ html { overflow-x: clip; }
   .eyebrow { font-size: .7rem; letter-spacing: .08em; }
   .site-footer { padding-bottom: 6rem; }
 }
+
+/* ===== Horizontal-scroll fix (all browsers, incl. older Safari/Android) ===== */
+.hero-stage, .mo-feature .bot-wrap { overflow: hidden; overflow: clip; overflow-clip-margin: 0; }
+@media (min-width: 901px) { .hero-stage { overflow: visible; } }   /* desktop has room: keep float cards un-clipped */
+@supports not (overflow: clip) { html, body { overflow-x: hidden; } }
+.btn .shine { inset: 0; width: 100%; }

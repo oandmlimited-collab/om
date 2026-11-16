@@ -5,7 +5,7 @@
 // =============================================================
 // Load the config defensively: a typo in firebase-config.js must never break the website.
 let firebaseConfig = {}, services = {};
-try { ({ firebaseConfig = {}, services = {} } = await import("../firebase-config.js?v=2.0.1")); }
+try { ({ firebaseConfig = {}, services = {} } = await import("../firebase-config.js?v=2.0.2")); }
 catch (e) { console.error("[OM] firebase-config.js has an error — running in offline mode until it's fixed.", e); }
 
 const SDK = "https://www.gstatic.com/firebasejs/13.3.0";
