@@ -2,7 +2,8 @@
 // OM Ltd — site interactions + Firebase-powered forms
 // =============================================================
 import { isConfigured, firestore, storage, track, remoteConfig } from "./firebase.js";
-import { initMo } from "./mo-ai.js";
+import { initChat } from "./om-ai.js";
+import { initQuote } from "./quote.js";
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -23,55 +24,28 @@ menu?.addEventListener("click", () => setMenu(!nav.classList.contains("open")));
 $$("a", nav).forEach(a => a.addEventListener("click", () => setMenu(false)));
 document.addEventListener("keydown", e => { if (e.key === "Escape") setMenu(false); });
 
-const toTop = $(".to-top"), ring = $(".to-top .ring");
+const toTop = $(".to-top");
 const onScroll = () => {
   const y = scrollY;
   header?.classList.toggle("scrolled", y > 10);
   toTop?.classList.toggle("on", y > 600);
-  if (ring) { const max = document.documentElement.scrollHeight - innerHeight; ring.style.strokeDashoffset = String(125.7 * (1 - Math.min(1, y / Math.max(1, max)))); }
 };
 onScroll(); addEventListener("scroll", onScroll, { passive: true });
 toTop?.addEventListener("click", () => scrollTo({ top: 0, behavior: reduced ? "auto" : "smooth" }));
 $$("[data-year]").forEach(el => el.textContent = new Date().getFullYear());
 
-// ---------------------------------------------------------------- ambient effects
-const drops = $(".bg-drops");
-if (drops && !reduced) for (let i = 0; i < 14; i++) {
-  const s = document.createElement("span");
-  s.style.left = Math.random() * 100 + "%"; s.style.animationDuration = 12 + Math.random() * 16 + "s"; s.style.animationDelay = -Math.random() * 20 + "s";
-  const z = 3 + Math.random() * 5; s.style.width = s.style.height = z + "px";
-  drops.appendChild(s);
-}
-const spot = $(".spotlight");
-const fine = matchMedia("(pointer: fine)").matches;
-if (fine && !reduced) {
-  let raf = 0, mx = 0, my = 0;
-  addEventListener("pointermove", e => {
-    mx = e.clientX; my = e.clientY;
-    if (raf) return;
-    raf = requestAnimationFrame(() => {
-      raf = 0;
-      spot?.style.setProperty("--sx", mx + "px"); spot?.style.setProperty("--sy", my + "px");
-      // robot eyes follow the cursor
-      $$(".mo-bot .pupils").forEach(p => {
-        const r = p.ownerSVGElement.getBoundingClientRect(); if (!r.width) return;
-        const dx = (mx - (r.left + r.width / 2)) / innerWidth, dy = (my - (r.top + r.height * .38)) / innerHeight;
-        p.setAttribute("transform", `translate(${(dx * 14).toFixed(1)} ${(dy * 10).toFixed(1)})`);
-      });
-    });
-  }, { passive: true });
-}
-// glass cursor-light + tilt
-$$(".glass-hover").forEach(card => {
-  card.addEventListener("pointermove", e => {
-    const r = card.getBoundingClientRect();
-    card.style.setProperty("--mx", e.clientX - r.left + "px"); card.style.setProperty("--my", e.clientY - r.top + "px");
-    if (card.hasAttribute("data-tilt") && fine && !reduced) {
-      const rx = ((e.clientY - r.top) / r.height - .5) * -6, ry = ((e.clientX - r.left) / r.width - .5) * 8;
-      card.style.transform = `translateY(-6px) perspective(900px) rotateX(${rx}deg) rotateY(${ry}deg)`;
-    }
-  });
-  card.addEventListener("pointerleave", () => { card.style.transform = ""; });
+// ---------------------------------------------------------------- theme (white default · blue)
+const themeBtn = $(".theme-toggle");
+const applyTheme = t => {
+  if (t === "blue") document.documentElement.dataset.theme = "blue"; else delete document.documentElement.dataset.theme;
+  themeBtn?.setAttribute("aria-label", t === "blue" ? "Switch to white theme" : "Switch to blue theme");
+  document.querySelector('meta[name="theme-color"]')?.setAttribute("content", t === "blue" ? "#061332" : "#f5f7fb");
+};
+applyTheme(document.documentElement.dataset.theme === "blue" ? "blue" : "white");
+themeBtn?.addEventListener("click", () => {
+  const t = document.documentElement.dataset.theme === "blue" ? "white" : "blue";
+  applyTheme(t); try { localStorage.setItem("om-theme", t); } catch {}
+  track("theme_change", { theme: t });
 });
 
 // reveal on scroll + counters
@@ -92,21 +66,6 @@ function countUp(el) {
   requestAnimationFrame(step);
 }
 
-// hero typewriter
-const typeEl = $("#heroType");
-if (typeEl) {
-  const lines = ["Need drip irrigation for your farm?", "Planning a new bathroom?", "Kitting out a site crew?", "Want OM backpacks for your team?", "Habari! Niulize chochote."];
-  let li = 0, ci = 0, del = false;
-  const tick = () => {
-    const full = lines[li];
-    typeEl.textContent = full.slice(0, ci);
-    if (!del && ci < full.length) ci++; else if (!del) { del = true; return setTimeout(tick, 1800); }
-    else if (ci > 0) ci--; else { del = false; li = (li + 1) % lines.length; }
-    setTimeout(tick, del ? 28 : 55);
-  };
-  reduced ? (typeEl.textContent = lines[0]) : setTimeout(tick, 1600);
-}
-
 // lightbox
 const lb = $("#lightbox");
 const openLb = (src, alt = "") => { if (!lb) return; $("img", lb).src = src; $("img", lb).alt = alt; lb.classList.add("on"); lb.setAttribute("aria-hidden", "false"); $("button", lb).focus(); track("view_poster", { src }); };
@@ -122,145 +81,22 @@ document.addEventListener("click", e => { const t = e.target.closest("[data-trac
 // ---------------------------------------------------------------- Firebase status + Remote Config
 const fbStatus = $("#fbStatus");
 if (isConfigured) firestore().then(f => { if (f && fbStatus) { fbStatus.classList.add("live"); $("span", fbStatus).textContent = "Live"; } });
-remoteConfig().then(rc => { const t = rc?.string("announcement_text"); if (t && $("#announcementText")) $("#announcementText").textContent = t; }).catch(() => {});
+remoteConfig().then(rc => { const t = rc?.string("announcement_text")?.trim(); if (t && $("#announcementText")) $("#announcementText").textContent = t; }).catch(() => {});
 
-// ---------------------------------------------------------------- service pre-selection
-const select = $("#serviceSelect");
-const remember = (k, v) => { try { sessionStorage.setItem(k, v); } catch {} };
-$$(".service-quote").forEach(a => a.addEventListener("click", () => {
-  if (select) { select.value = a.dataset.service; select.dispatchEvent(new Event("change")); }
-  else remember("om-service", a.dataset.service);
-}));
-if (select) {
-  try {
-    const s = sessionStorage.getItem("om-service"), d = sessionStorage.getItem("om-details"), list = sessionStorage.getItem("om-enquiry-list");
-    if (s) { select.value = s; sessionStorage.removeItem("om-service"); }
-    const ta = $('#quoteForm textarea[name="details"]');
-    if (ta) {
-      const parts = [];
-      if (list) { const items = JSON.parse(list); if (items.length) { parts.push("Items I'm interested in:\n" + items.map(i => `• ${i}`).join("\n")); if (!s) select.value = "Branded merchandise"; } }
-      if (d) { parts.push(d); sessionStorage.removeItem("om-details"); }
-      if (parts.length && !ta.value) ta.value = parts.join("\n\n");
-    }
-  } catch {}
-}
-
-// ---------------------------------------------------------------- shared form helpers
+// ---------------------------------------------------------------- shared helpers
 const clean = v => String(v ?? "").trim();
-const refCode = () => "OM-" + Date.now().toString(36).toUpperCase().slice(-5) + Math.random().toString(36).slice(2, 5).toUpperCase();
+const say = (el, text, type = "") => { if (!el) return; el.textContent = text; el.classList.remove("success", "error"); type && el.classList.add(type); };
 function markInvalid(form) {
   let first = null;
   $$("input, select, textarea", form).forEach(el => {
-    if (el.classList.contains("hp") || el.type === "file") return;
-    const bad = !el.checkValidity(); el.setAttribute("aria-invalid", String(bad));
-    if (bad && !first) first = el;
+    if (el.classList.contains("hp") || el.type === "file" || el.type === "radio") return;
+    const bad = !el.checkValidity(); el.setAttribute("aria-invalid", String(bad)); if (bad && !first) first = el;
   });
   first?.focus(); return !first;
 }
-$$("input, select, textarea").forEach(el => el.addEventListener("input", () => el.removeAttribute("aria-invalid")));
 const setBusy = (btn, on, label) => { btn.disabled = on; btn.classList.toggle("loading", on); if (label) $(".submit-label", btn).textContent = label; };
-const say = (el, text, type = "") => { if (!el) return; el.textContent = text; el.classList.remove("success", "error"); type && el.classList.add(type); };
-
-// ---------------------------------------------------------------- quote form (+ Storage attachments)
-const quoteForm = $("#quoteForm");
-if (quoteForm) {
-  const status = $("#formStatus"), btn = $("button[type=submit]", quoteForm);
-  const fileInput = $("#files"), fileList = $("#fileList"), dz = $("#dropzone"), prog = $("#uploadProgress");
-  const MAX = 3, MAX_MB = 8, OK = ["image/jpeg", "image/png", "image/webp", "application/pdf"];
-  let files = [];
-  const renderFiles = () => {
-    fileList.innerHTML = "";
-    files.forEach((f, i) => {
-      const p = document.createElement("span"); p.className = "file-pill"; p.textContent = `📎 ${f.name} (${(f.size / 1048576).toFixed(1)} MB)`;
-      const x = document.createElement("button"); x.type = "button"; x.textContent = "×"; x.setAttribute("aria-label", `Remove ${f.name}`); x.onclick = () => { files.splice(i, 1); renderFiles(); };
-      p.appendChild(x); fileList.appendChild(p);
-    });
-  };
-  const addFiles = list => {
-    for (const f of list) {
-      if (files.length >= MAX) { toast(`You can attach up to ${MAX} files.`); break; }
-      if (!OK.includes(f.type)) { toast(`${f.name}: please use JPG, PNG, WEBP or PDF.`); continue; }
-      if (f.size > MAX_MB * 1048576) { toast(`${f.name} is larger than ${MAX_MB} MB.`); continue; }
-      files.push(f);
-    }
-    renderFiles();
-  };
-  fileInput?.addEventListener("change", () => { addFiles(fileInput.files); fileInput.value = ""; });
-  ["dragenter", "dragover"].forEach(ev => dz?.addEventListener(ev, e => { e.preventDefault(); dz.classList.add("drag"); }));
-  ["dragleave", "drop"].forEach(ev => dz?.addEventListener(ev, e => { e.preventDefault(); dz.classList.remove("drag"); }));
-  dz?.addEventListener("drop", e => addFiles(e.dataTransfer.files));
-
-  const mailto = d => `mailto:${EMAIL}?subject=${encodeURIComponent(`OM Ltd quotation request – ${d.service} (${d.ref})`)}&body=${encodeURIComponent(
-`New quotation request (${d.ref})
-
-Name: ${d.name}
-Company: ${d.company || "—"}
-Email: ${d.email}
-Phone: ${d.phone}
-Service: ${d.service}
-Location: ${d.location || "—"}
-Budget: ${d.budget || "—"}
-
-Requirements:
-${d.details}
-${files.length ? `\n(I have ${files.length} attachment(s) — I'll attach them to this email.)` : ""}`)}`;
-
-  async function uploadAll(ref) {
-    if (!files.length) return [];
-    const s = await storage(); if (!s) throw new Error("storage-unavailable");
-    const { st, storage: bucket } = s;
-    prog.classList.add("on");
-    const total = files.reduce((a, f) => a + f.size, 0); const done = new Map();
-    const urls = await Promise.all(files.map((f, i) => new Promise((res, rej) => {
-      const safe = f.name.replace(/[^\w.\-]+/g, "_").slice(-80);
-      const r = st.ref(bucket, `quote-uploads/${ref}/${i}-${safe}`);
-      const task = st.uploadBytesResumable(r, f, { contentType: f.type });
-      task.on("state_changed", snap => { done.set(i, snap.bytesTransferred); $("span", prog).style.width = (100 * [...done.values()].reduce((a, b) => a + b, 0) / total).toFixed(0) + "%"; },
-        rej, () => res({ name: f.name, path: r.fullPath, size: f.size, type: f.type }));
-    })));
-    return urls;
-  }
-
-  quoteForm.addEventListener("submit", async e => {
-    e.preventDefault();
-    if (quoteForm.website.value) return; // honeypot
-    if (!markInvalid(quoteForm)) { say(status, "Please complete the highlighted fields.", "error"); return; }
-    const fd = Object.fromEntries(new FormData(quoteForm));
-    if (!/^[0-9+()\s-]{7,}$/.test(fd.phone)) { quoteForm.phone.setAttribute("aria-invalid", "true"); quoteForm.phone.focus(); say(status, "Please enter a valid phone number.", "error"); return; }
-    const data = { ref: refCode(), name: clean(fd.name), company: clean(fd.company), email: clean(fd.email), phone: clean(fd.phone), service: fd.service,
-      location: clean(fd.location), budget: fd.budget || "", details: clean(fd.details), consent: fd.consent === "on" };
-
-    setBusy(btn, true, "Sending…"); say(status, "Sending your request securely…");
-    const f = await firestore();
-    if (f) {
-      try {
-        let attachments = [];
-        try { attachments = await uploadAll(data.ref); }
-        catch (err) { console.warn("[OM] upload failed", err); if (files.length) toast("Attachments couldn't upload — we'll still send your request. You can share files on WhatsApp."); }
-        await f.fs.addDoc(f.fs.collection(f.db, "quotationRequests"), {
-          ...data, attachments, status: "new", source: "om-website", page: location.pathname,
-          userAgent: navigator.userAgent.slice(0, 200), createdAt: f.fs.serverTimestamp()
-        });
-        track("generate_lead", { service: data.service, currency: "KES", attachments: attachments.length });
-        $("#refCode").textContent = data.ref;
-        quoteForm.reset(); files = []; renderFiles(); prog.classList.remove("on");
-        try { sessionStorage.removeItem("om-enquiry-list"); } catch {}
-        quoteForm.hidden = true; $("#quoteSuccess").classList.add("on");
-        $("#quoteSuccess").scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "center" });
-      } catch (err) {
-        console.error("[OM] quote save failed", err);
-        say(status, "We couldn't send this online, so your email app will open with everything filled in.", "error");
-        location.href = mailto(data);
-      }
-    } else {
-      say(status, "Opening your email app with your request ready to send…");
-      track("generate_lead", { service: data.service, method: "email" });
-      location.href = mailto(data);
-    }
-    setBusy(btn, false, "Send quotation request");
-  });
-  $("#newQuote")?.addEventListener("click", () => { $("#quoteSuccess").classList.remove("on"); quoteForm.hidden = false; say(status, "Your details are only used to respond to your enquiry."); });
-}
+// service links on other pages → carry the choice to the home-page quote wizard
+if (!$("#quoteWizard")) $$(".service-quote").forEach(a => a.addEventListener("click", () => { try { sessionStorage.setItem("om-service", a.dataset.service); } catch {} }));
 
 // ---------------------------------------------------------------- newsletter (footer + section + newsletter page)
 async function subscribe(form, statusEl) {
@@ -321,7 +157,7 @@ if (reviewsEl) {
       $("#reviewsEmpty").hidden = true;
       snap.forEach(d => {
         const r = d.data(), el = document.createElement("article");
-        el.className = "review glass glass-hover";
+        el.className = "card review";
         const ini = (r.name || "?").split(/\s+/).map(w => w[0]).join("").slice(0, 2).toUpperCase();
         el.innerHTML = `<div class="stars" aria-label="${r.rating} out of 5 stars">${"★".repeat(r.rating)}${"☆".repeat(5 - r.rating)}</div><blockquote></blockquote><footer><span class="ini"></span><div><b></b><small></small></div></footer>`;
         $("blockquote", el).textContent = `“${r.message}”`; $(".ini", el).textContent = ini; $("b", el).textContent = r.name;
@@ -410,7 +246,8 @@ $$("[data-add]").forEach(b => b.addEventListener("click", () => {
 $("#trayClear")?.addEventListener("click", () => { list = []; renderTray(); });
 renderTray();
 
-// ---------------------------------------------------------------- Mo AI
-try { initMo(); } catch (e) { console.error("[OM] Mo AI failed to start", e); }
+// ---------------------------------------------------------------- OM AI chat + quote wizard
+try { initChat(); } catch (e) { console.error("[OM] OM AI failed to start", e); }
+try { initQuote({ toast }); } catch (e) { console.error("[OM] quote wizard failed to start", e); }
 
 // PWA-ish: nothing cached on purpose (always fresh deploys). Manifest only.

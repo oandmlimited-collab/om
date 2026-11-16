@@ -5,7 +5,7 @@
 // =============================================================
 // Load the config defensively: a typo in firebase-config.js must never break the website.
 let firebaseConfig = {}, services = {};
-try { ({ firebaseConfig = {}, services = {} } = await import("../firebase-config.js?v=2.0.2")); }
+try { ({ firebaseConfig = {}, services = {} } = await import("../firebase-config.js?v=3.0.0")); }
 catch (e) { console.error("[OM] firebase-config.js has an error — running in offline mode until it's fixed.", e); }
 
 const SDK = "https://www.gstatic.com/firebasejs/13.3.0";
@@ -76,10 +76,10 @@ export function track(name, params = {}) {
 
 /** Remote Config with safe defaults */
 export const REMOTE_DEFAULTS = {
-  announcement_text: "Smart water solutions · Reliable supply · Professional service",
-  mo_ai_enabled: true,
-  mo_ai_model: services.moAi?.model || "gemini-3.5-flash-lite",
-  mo_ai_greeting: ""
+  announcement_text: "",   // empty = keep the text built into the page
+  assistant_enabled: true,
+  assistant_model: (services.assistant || services.moAi)?.model || "gemini-3.5-flash-lite",
+  assistant_greeting: ""
 };
 export const remoteConfig = () => once("remoteConfig", async () => {
   const app = await getApp(); if (!app || !services.remoteConfig) return null;
@@ -95,18 +95,19 @@ export const remoteConfig = () => once("remoteConfig", async () => {
   };
 });
 
-/** Firebase AI Logic — a Gemini model for Mo AI. Returns null if disabled. */
+/** Firebase AI Logic — a Gemini model for OM AI. Returns null if disabled. */
+const AI = () => services.assistant || services.moAi || {};
 export const aiModel = (systemInstruction) => once("ai", async () => {
-  if (!services.moAi?.enabled) return null;
+  if (!AI().enabled) return null;
   const app = await getApp(); if (!app) return null;
   const rc = await remoteConfig();
-  if (rc && !rc.bool("mo_ai_enabled")) return null;
-  const model = (rc && rc.string("mo_ai_model")) || services.moAi.model;
+  if (rc && !rc.bool("assistant_enabled")) return null;
+  const model = (rc && rc.string("assistant_model")) || AI().model || "gemini-3.5-flash-lite";
   const ai = await load("ai");
   const backend = ai.getAI(app, { backend: new ai.GoogleAIBackend() });
   return ai.getGenerativeModel(backend, {
     model,
     systemInstruction,
-    generationConfig: { temperature: services.moAi.temperature ?? 0.6, maxOutputTokens: 700 }
+    generationConfig: { temperature: AI().temperature ?? 0.6, maxOutputTokens: 700 }
   });
 });

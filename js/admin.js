@@ -63,8 +63,8 @@ function start(fs, db) {
     $("#kNew").textContent = quotes.filter(q => q.status === "new").length;
     $("#quotesBody").innerHTML = quotes.length ? quotes.map(q => `
       <tr><td>${fmt(q.createdAt)}</td><td><code>${esc(q.ref || q.id.slice(0, 6))}</code></td>
-      <td><b>${esc(q.name)}</b>${q.company ? `<br><small class="muted">${esc(q.company)}</small>` : ""}<br><a href="mailto:${esc(q.email)}">${esc(q.email)}</a><br><a href="https://wa.me/${esc(String(q.phone).replace(/\D/g, "").replace(/^0/, "254"))}" target="_blank" rel="noopener">${esc(q.phone)}</a></td>
-      <td>${esc(q.service)}${q.location ? `<br><small class="muted">📍 ${esc(q.location)}</small>` : ""}${q.budget ? `<br><small class="muted">💰 ${esc(q.budget)}</small>` : ""}</td>
+      <td><b>${esc(q.name)}</b>${q.company ? `<br><small class="muted">${esc(q.company)}</small>` : ""}${q.email ? `<br><a href="mailto:${esc(q.email)}">${esc(q.email)}</a>` : ""}<br><a href="https://wa.me/${esc(String(q.phone).replace(/\D/g, "").replace(/^0/, "254"))}" target="_blank" rel="noopener">${esc(q.phone)}</a></td>
+      <td>${esc(q.service)}${q.location || q.county ? `<br><small class="muted">📍 ${esc(q.location || q.county)}</small>` : ""}${q.coords ? `<br><a href="https://www.openstreetmap.org/?mlat=${+q.coords.lat}&mlon=${+q.coords.lng}#map=15/${+q.coords.lat}/${+q.coords.lng}" target="_blank" rel="noopener">View on map</a>` : ""}${q.budget ? `<br><small class="muted">💰 ${esc(q.budget)}</small>` : ""}</td>
       <td style="max-width:320px;white-space:pre-wrap">${esc(q.details)}</td>
       <td>${(q.attachments || []).map((a, i) => `<a href="#" data-file="${esc(a.path)}">📎 ${esc(a.name || "file " + (i + 1))}</a>`).join("<br>") || "—"}</td>
       <td><span class="pill ${esc(q.status)}">${esc(q.status)}</span><br><select class="mini-select" data-status="${q.id}" aria-label="Update status">${["new", "contacted", "won", "closed"].map(s => `<option${s === q.status ? " selected" : ""}>${s}</option>`).join("")}</select></td></tr>`).join("")
@@ -80,6 +80,22 @@ function start(fs, db) {
     e.preventDefault();
     const st = await storage(); if (!st) return;
     window.open(await st.st.getDownloadURL(st.st.ref(st.storage, a.dataset.file)), "_blank", "noopener");
+  });
+
+  // human-mode chats (live)
+  const waNum = p => String(p).replace(/\D/g, "").replace(/^0/, "254");
+  fs.onSnapshot(fs.query(fs.collection(db, "liveChats"), fs.orderBy("createdAt", "desc"), fs.limit(300)), snap => {
+    const rows = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    $("#kChats").textContent = rows.filter(r => r.status === "new").length;
+    $("#chatsBody").innerHTML = rows.length ? rows.map(r => `<tr><td>${fmt(r.createdAt)}</td><td><b>${esc(r.name)}</b><br>${esc(r.phone)}</td>
+      <td style="max-width:340px;white-space:pre-wrap">${esc(r.message)}</td><td style="max-width:220px"><small class="muted">${esc(r.context || "—")}</small></td>
+      <td><span class="pill ${esc(r.status)}">${esc(r.status)}</span><br><select class="mini-select" data-chat-status="${r.id}" aria-label="Update status">${["new", "contacted", "closed"].map(s => `<option${s === r.status ? " selected" : ""}>${s}</option>`).join("")}</select></td>
+      <td><a class="btn btn-primary btn-sm" target="_blank" rel="noopener" href="https://wa.me/${waNum(r.phone)}?text=${encodeURIComponent(`Hello ${r.name}, this is the OM Ltd team replying to your message: "${String(r.message).slice(0, 120)}"`)}">Reply on WhatsApp</a></td></tr>`).join("")
+      : `<tr><td colspan="6" class="muted">No messages yet — they appear here when visitors use “Talk to a human” in OM AI.</td></tr>`;
+  });
+  document.addEventListener("change", async e => {
+    const s = e.target.closest("[data-chat-status]"); if (!s) return;
+    await fs.updateDoc(fs.doc(db, "liveChats", s.dataset.chatStatus), { status: s.value, updatedAt: fs.serverTimestamp(), updatedBy: user.email });
   });
 
   // reviews (live)
@@ -121,7 +137,7 @@ function start(fs, db) {
   // CSV exports
   const csv = (rows, cols) => [cols.join(","), ...rows.map(r => cols.map(c => `"${String(Array.isArray(r[c]) ? r[c].join("; ") : r[c]?.toDate ? r[c].toDate().toISOString() : r[c] ?? "").replace(/"/g, '""')}"`).join(","))].join("\n");
   const download = (name, text) => { const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([text], { type: "text/csv" })); a.download = name; a.click(); };
-  $("#exportCsv").addEventListener("click", () => download(`om-quotes-${new Date().toISOString().slice(0, 10)}.csv`, csv(quotes, ["createdAt", "ref", "status", "name", "company", "email", "phone", "service", "location", "budget", "details"])));
+  $("#exportCsv").addEventListener("click", () => download(`om-quotes-${new Date().toISOString().slice(0, 10)}.csv`, csv(quotes.map(q => ({ ...q, map: q.coords ? `${q.coords.lat},${q.coords.lng}` : "" })), ["createdAt", "ref", "status", "name", "company", "email", "phone", "service", "location", "county", "map", "budget", "details"])));
   $("#exportSubs").addEventListener("click", () => download(`om-subscribers-${new Date().toISOString().slice(0, 10)}.csv`, csv(audience("all"), ["createdAt", "email", "name", "interests"])));
 
   // ---------------- newsletter composer
@@ -141,7 +157,7 @@ function start(fs, db) {
     return `<!doctype html><html><body style="margin:0;background:#eef3fb;font-family:Arial,Helvetica,sans-serif">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#eef3fb;padding:24px 12px"><tr><td align="center">
 <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#fff;border-radius:18px;overflow:hidden">
-<tr><td style="background:linear-gradient(120deg,#061336,#0b4fd6);background-color:#0b2a7a;padding:28px 32px"><img src="${base}assets/om-mark.png" width="64" alt="OM Ltd" style="display:block;margin-bottom:10px"><div style="color:#7fe5ff;font-size:12px;letter-spacing:2px;font-weight:700">THE OM NEWSLETTER</div><div style="color:#fff;font-size:26px;font-weight:800;margin-top:6px">${esc(headline)}</div></td></tr>
+<tr><td style="background:linear-gradient(120deg,#061336,#0b4fd6);background-color:#0b2a7a;padding:28px 32px"><img src="${base}assets/om-mark.png" width="64" alt="OM Ltd" style="display:block;margin-bottom:10px;background:#00208b;border-radius:8px;padding:4px"><div style="color:#7fe5ff;font-size:12px;letter-spacing:2px;font-weight:700">THE OM NEWSLETTER</div><div style="color:#fff;font-size:26px;font-weight:800;margin-top:6px">${esc(headline)}</div></td></tr>
 <tr><td style="padding:28px 32px">${name ? `<p style="margin:0 0 16px;font-size:16px;color:#2b3a55">Hi ${esc(name)},</p>` : ""}${paras}${cta}</td></tr>
 <tr><td style="padding:20px 32px;background:#f5f8fe;font-size:12px;color:#7187ad;line-height:1.6">OM Ltd · Quality Water Solutions · Build · Flow · Thrive<br>WhatsApp +254 714 995 749 · oandmlimited@gmail.com<br>
 You're receiving this because you subscribed at our website. <a href="${base}newsletter.html?email=${encodeURIComponent(email)}#unsubscribe" style="color:#1a6bff">Unsubscribe</a></td></tr>

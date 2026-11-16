@@ -24,10 +24,14 @@ service cloud.firestore {
     // ---- Quotation requests ----
     match /quotationRequests/{id} {
       allow create: if
-        request.resource.data.keys().hasOnly(['ref','name','company','email','phone','service','location','budget','details','consent','attachments','status','source','page','userAgent','createdAt']) &&
-        request.resource.data.keys().hasAll(['name','email','phone','service','details','consent','status','createdAt']) &&
+        request.resource.data.keys().hasOnly(['ref','name','company','email','phone','service','location','county','coords','budget','details','consent','attachments','status','source','page','userAgent','createdAt']) &&
+        request.resource.data.keys().hasAll(['name','phone','service','details','consent','status','createdAt']) &&
         isStr(request.resource.data.name, 2, 120) &&
-        validEmail(request.resource.data.email) &&
+        (!('email' in request.resource.data) || request.resource.data.email == '' || validEmail(request.resource.data.email)) &&
+        optStr(request.resource.data, 'county', 40) &&
+        (!('coords' in request.resource.data) || (request.resource.data.coords is map &&
+          request.resource.data.coords.keys().hasOnly(['lat','lng']) &&
+          request.resource.data.coords.lat is number && request.resource.data.coords.lng is number)) &&
         isStr(request.resource.data.phone, 7, 40) &&
         isStr(request.resource.data['service'], 2, 120) &&
         isStr(request.resource.data.details, 3, 5000) &&
@@ -43,6 +47,21 @@ service cloud.firestore {
         nowish();
       allow read, delete: if isAdmin();
       allow update: if isAdmin() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','updatedAt','updatedBy','notes']);
+    }
+
+    // ---- Human-mode chat messages (OM AI → "Talk to a human") ----
+    match /liveChats/{id} {
+      allow create: if
+        request.resource.data.keys().hasOnly(['name','phone','message','context','page','status','createdAt']) &&
+        isStr(request.resource.data.name, 1, 80) &&
+        isStr(request.resource.data.phone, 7, 40) &&
+        isStr(request.resource.data.message, 1, 2000) &&
+        optStr(request.resource.data, 'context', 600) &&
+        optStr(request.resource.data, 'page', 120) &&
+        request.resource.data.status == 'new' &&
+        nowish();
+      allow read, delete: if isAdmin();
+      allow update: if isAdmin() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','updatedAt','updatedBy']);
     }
 
     // ---- Newsletter ----
