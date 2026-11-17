@@ -658,3 +658,8 @@ table.data td { padding: .75rem .7rem; border-bottom: 1px solid var(--border); v
 .send-steps li > .btn { margin-left: .4rem; vertical-align: middle; }
 .send-steps small { display: block; color: var(--text-mute); margin-top: .2rem; }
 #waFollow svg { width: 18px; height: 18px; }
+.founder .title { color: var(--text-soft); font-size: .93rem; font-weight: 500; }
+.founder .tagline { font-family: var(--font-display); font-weight: 600; font-size: 1rem; color: var(--brand); margin-top: .55rem; letter-spacing: -.01em; }
+.founder small { flex: 1; line-height: 1.55; font-size: .86rem; color: var(--text-soft); margin-top: .3rem; }
+.ftags { display: flex; flex-wrap: wrap; justify-content: center; gap: .3rem; margin-top: .9rem; }
+.ftags span { padding: .2rem .6rem; border-radius: 999px; font-size: .74rem; font-weight: 600; color: var(--brand); background: var(--brand-soft); }

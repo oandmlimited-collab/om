@@ -414,15 +414,23 @@ def merch():
 
 def founders():
     people = [
-        ("JS", "John Senteu", "assets/founders/john.webp", "Co-founder", "Managing Director", "Experienced in building partnerships, with a track record of successfully delivering high-stakes projects."),
-        ("DM", "Eng. Dickson Monyatet", "assets/founders/dickson.webp", "Co-founder", "Engineer", "Over 10 years in plumbing systems installation, maintenance and repair."),
-        ("IO", "Eng. Ian A. Ombui", "assets/founders/ian.webp", "Co-founder", "Engineer · Irrigation systems &amp; client consultation", "Designs irrigation systems for farms and guides clients from first consultation to a working system."),
-        ("IO", "Isaiah Okara", "assets/founders/isaiah.webp", "Co-founder", "Water Mechanics Technologist", "New technology and modern design."),
+        ("JS", "John Senteu", "assets/founders/john.webp", "Managing Director", "The deal-maker",
+         "John turns handshakes into lasting partnerships. He steers OM&#39;s business and has successfully delivered high-stakes projects — the kind where there&#39;s no room for error.",
+         ["Partnerships", "Project delivery", "Leadership"]),
+        ("DM", "Eng. Dickson Monyatet", "assets/founders/dickson.webp", "Engineer", "A decade behind the walls",
+         "Over 10 years installing, maintaining and repairing plumbing systems. Leaks, blockages, low pressure — Dickson has seen them all, and knows how to fix them properly.",
+         ["Installation", "Maintenance", "Repairs"]),
+        ("IO", "Eng. Ian A. Ombui", "assets/founders/ian.webp", "Engineer · Irrigation", "Turning dry land green",
+         "Ian designs irrigation systems that put every drop where crops need it — and walks each farmer from the first consultation to a working system in the field.",
+         ["Irrigation design", "Farm systems", "Consultation"]),
+        ("IO", "Isaiah Okara", "assets/founders/isaiah.webp", "Water Mechanics Technologist", "Tomorrow&#39;s tech, today",
+         "Isaiah keeps OM ahead of the curve — bringing new water technology and modern design to every project, so installations look as good as they work.",
+         ["New technology", "Modern design", "Innovation"]),
     ]
-    av = lambda a, n, ph: f'<div class="avatar photo"><img src="{ph}?v=3" alt="{n}" width="160" height="160" loading="lazy"></div>' if ph else f'<div class="avatar">{a}</div>'
-    cards = "".join(f'<article class="card founder reveal" style="--d:{i*.06:.2f}s">{av(a, n, ph)}<span class="role">{r}</span><h2>{n}</h2><p>{t}</p><small>{bio}</small></article>' for i, (a, n, ph, r, t, bio) in enumerate(people))
+    av = lambda a, n, ph: f'<div class="avatar photo"><img src="{ph}?v=4" alt="{n}" width="160" height="160" loading="lazy"></div>' if ph else f'<div class="avatar">{a}</div>'
+    cards = "".join(f'''<article class="card founder reveal" style="--d:{i*.06:.2f}s">{av(a, n, ph)}<span class="role">Co-founder</span><h2>{n}</h2><p class="title">{t}</p><p class="tagline">“{tag}”</p><small>{bio}</small><div class="ftags">{"".join(f"<span>{x}</span>" for x in tags)}</div></article>''' for i, (a, n, ph, t, tag, bio, tags) in enumerate(people))
     return head("Founders | OM Ltd", "Meet the founders of OM Ltd — John Senteu, Dickson Monyatet, Ian Ombui and Isaiah Okara.", "founders") + f'''
-<section class="page-hero"><div class="container"><span class="eyebrow">The people behind OM</span><h1>Meet our founders.</h1><p>Four founders building practical water, farm and workplace solutions — and a brand that carries beyond the job site.</p></div></section>
+<section class="page-hero"><div class="container"><span class="eyebrow">The people behind OM</span><h1>Four founders. One team.</h1><p>A deal-maker, a plumbing veteran, an irrigation engineer and a technologist — together they give every OM client one point of contact, one schedule and one written quote.</p></div></section>
 <section class="section-sm" style="padding-top:0"><div class="container"><div class="grid grid-4">{cards}</div></div></section>
 <section class="section section-alt"><div class="container">
  <div class="section-head center reveal"><span class="eyebrow">What drives us</span><h2>Build · Flow · Thrive.</h2></div>
