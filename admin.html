@@ -59,13 +59,19 @@
   <div class="card form-card" data-admin-panel="compose" hidden>
    <div class="grid grid-2">
     <form id="composeForm" novalidate>
-     <div class="form-head"><h3>New newsletter</h3><small>Sent via the “Trigger Email” extension</small></div>
+     <div class="form-head"><h3>New newsletter</h3><small>Free — sends from your own Gmail</small></div>
      <label class="field">Audience<select name="audience"><option value="all">All active subscribers</option><option value="farm">Farm &amp; irrigation</option><option value="plumbing">Plumbing</option><option value="safety">Safety &amp; workwear</option><option value="merch">Merch drops</option></select></label>
      <label class="field">Subject *<input name="subject" required maxlength="140" placeholder="e.g. New Cyber Lime backpacks have landed"></label>
      <label class="field">Headline *<input name="headline" required maxlength="120"></label>
      <label class="field">Message *<textarea name="body" required rows="8" maxlength="6000" placeholder="Blank lines become paragraphs."></textarea></label>
      <div class="form-row"><label class="field">Button text<input name="ctaText" maxlength="40" placeholder="Shop the drop"></label><label class="field">Button link<input name="ctaUrl" type="url" maxlength="300" placeholder="https://…/merch"></label></div>
-     <div class="hero-actions" style="margin-top:.2rem"><button class="btn btn-outline" type="button" id="sendTest">Send test to me</button><button class="btn btn-primary" type="submit"><span class="spinner"></span><span class="submit-label">Send newsletter</span></button></div>
+     <div class="hero-actions" style="margin-top:.2rem"><button class="btn btn-primary" type="submit"><span class="spinner"></span><span class="submit-label">Prepare to send</span></button><button class="btn btn-outline" type="button" id="exportMailchimp">Export for Mailchimp</button></div>
+     <ol class="send-steps" id="sendSteps" hidden>
+      <li><b>Copy the recipients</b> <button class="btn btn-soft btn-sm" type="button" id="copyBcc">Copy emails</button><small id="bccInfo"></small></li>
+      <li><b>Open Gmail</b> with your subject and message filled in <a class="btn btn-soft btn-sm" id="openGmail" target="_blank" rel="noopener">Open Gmail</a></li>
+      <li><b>Paste the emails into “Bcc”</b> (never “To” — keeps subscribers private) and press Send. <small>Gmail sends up to ~500 emails a day for free; bigger lists → use “Export for Mailchimp” (free up to 500 contacts).</small></li>
+      <li><button class="btn btn-outline btn-sm" type="button" id="markSent">I've sent it — log this campaign</button></li>
+     </ol>
      <p class="form-status" id="composeStatus" role="status" aria-live="polite"></p>
     </form>
     <div><div class="form-head"><h3>Preview</h3><small id="audienceCount">—</small></div><iframe id="nlPreview" title="Newsletter preview" style="width:100%;height:600px;border:0;border-radius:12px;background:#fff"></iframe></div>

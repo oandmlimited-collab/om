@@ -649,3 +649,12 @@ table.data td { padding: .75rem .7rem; border-bottom: 1px solid var(--border); v
 @media (max-width: 600px) { .grid-5 { grid-template-columns: 1fr; } }
 .footer-about .hours { font-size: .9rem; line-height: 1.7; margin-top: -.3rem; }
 .footer-about .hours b { color: var(--text); font-weight: 600; }
+
+.photo-tip { display: flex; gap: .8rem; align-items: flex-start; padding: .9rem 1rem; border-radius: 12px; background: var(--surface-2); border: 1px dashed var(--border-strong); margin-top: .2rem; }
+.photo-tip svg { width: 24px; height: 24px; color: #25a35a; flex: none; margin-top: 2px; }
+.photo-tip b { display: block; font-size: .93rem; }
+.photo-tip small { color: var(--text-mute); font-size: .84rem; }
+.send-steps { margin: 1.2rem 0 0; padding-left: 1.2rem; display: grid; gap: .8rem; font-size: .92rem; }
+.send-steps li > .btn { margin-left: .4rem; vertical-align: middle; }
+.send-steps small { display: block; color: var(--text-mute); margin-top: .2rem; }
+#waFollow svg { width: 18px; height: 18px; }

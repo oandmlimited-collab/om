@@ -1,8 +1,7 @@
 // =============================================================
 // OM Ltd — team dashboard (Firebase Auth + Firestore + Storage)
 // Access: Google sign-in, then a document must exist at admins/{uid}.
-// Newsletters are delivered by the "Trigger Email from Firestore" extension,
-// which watches the `mail` collection.
+// Newsletters are sent for free from your own Gmail (Bcc) or via a Mailchimp CSV export.
 // =============================================================
 import { isConfigured, auth, firestore, storage, track } from "./firebase.js";
 
@@ -78,7 +77,7 @@ function start(fs, db) {
   document.addEventListener("click", async e => {
     const a = e.target.closest("[data-file]"); if (!a) return;
     e.preventDefault();
-    const st = await storage(); if (!st) return;
+    const st = await storage(); if (!st) { alert("File downloads need Cloud Storage (paid plan). Ask the customer to resend on WhatsApp."); return; }
     window.open(await st.st.getDownloadURL(st.st.ref(st.storage, a.dataset.file)), "_blank", "noopener");
   });
 
@@ -171,40 +170,40 @@ You're receiving this because you subscribed at our website. <a href="${base}new
   }
   form.addEventListener("input", updatePreview);
 
-  async function queue(recipients, v, isTest) {
-    const text = `${v.headline}\n\n${v.body}${v.ctaUrl ? `\n\n${v.ctaText || "Learn more"}: ${v.ctaUrl}` : ""}\n\n— OM Ltd`;
-    for (let i = 0; i < recipients.length; i += 400) {
-      const batch = fs.writeBatch(db);
-      for (const r of recipients.slice(i, i + 400)) {
-        batch.set(fs.doc(fs.collection(db, "mail")), {
-          to: r.email,
-          message: { subject: (isTest ? "[TEST] " : "") + v.subject, html: emailHtml(v, r.email, r.name), text },
-          campaign: isTest ? "test" : v.subject, createdAt: fs.serverTimestamp(), createdBy: user.email
-        });
-      }
-      await batch.commit();
-    }
-  }
-  $("#sendTest").addEventListener("click", async () => {
-    if (!form.reportValidity()) return;
-    await queue([{ email: user.email, name: (user.displayName || "").split(" ")[0] }], values(), true);
-    status.textContent = `Test queued to ${user.email}. (Requires the Trigger Email extension.)`; status.className = "form-status success";
-  });
-  form.addEventListener("submit", async e => {
+  // ---- 100% free sending: your own Gmail (Bcc) or a Mailchimp import ----
+  const base = location.origin + location.pathname.replace(/admin(\.html)?$/, "");
+  const plain = v => `${v.headline}\n\n${v.body}${v.ctaUrl ? `\n\n${v.ctaText || "Learn more"}: ${v.ctaUrl}` : ""}\n\n— The OM team\nWhatsApp +254 714 995 749 · ${base}\n\nDon't want these emails? Unsubscribe: ${base}newsletter.html#unsubscribe`;
+  let prepared = null;
+  form.addEventListener("submit", e => {
     e.preventDefault();
     if (!form.reportValidity()) return;
     const v = values(), list = audience(v.audience);
     if (!list.length) { status.textContent = "No active subscribers in this audience yet."; status.className = "form-status error"; return; }
-    if (!confirm(`Send “${v.subject}” to ${list.length} subscriber(s)?`)) return;
-    const btn = $("button[type=submit]", form); btn.disabled = true; btn.classList.add("loading");
-    try {
-      await queue(list, v, false);
-      await fs.addDoc(fs.collection(db, "newsletterCampaigns"), { subject: v.subject, headline: v.headline, audience: v.audience, recipients: list.length, sentBy: user.email, createdAt: fs.serverTimestamp() });
-      track("newsletter_sent", { recipients: list.length });
-      status.textContent = `✅ Queued for ${list.length} subscriber(s). Delivery status appears on each mail document.`; status.className = "form-status success";
-      form.reset(); updatePreview();
-    } catch (err) { status.textContent = "Couldn't queue the newsletter: " + err.message; status.className = "form-status error"; }
-    btn.disabled = false; btn.classList.remove("loading");
+    prepared = { v, list };
+    $("#bccInfo").textContent = `${list.length} address(es)`;
+    $("#openGmail").href = `https://mail.google.com/mail/?view=cm&fs=1&su=${encodeURIComponent(v.subject)}&body=${encodeURIComponent(plain(v))}`;
+    $("#sendSteps").hidden = false;
+    status.textContent = list.length > 450 ? "Large list — Gmail allows about 500 emails a day. Consider sending in two batches or using Mailchimp." : "Ready. Follow the 3 steps below.";
+    status.className = "form-status success";
+  });
+  $("#copyBcc").addEventListener("click", async () => {
+    if (!prepared) return;
+    const txt = prepared.list.map(s => s.email).join(", ");
+    try { await navigator.clipboard.writeText(txt); $("#copyBcc").textContent = "Copied ✓"; }
+    catch { prompt("Copy these addresses:", txt); }
+    setTimeout(() => $("#copyBcc").textContent = "Copy emails", 2500);
+  });
+  $("#markSent").addEventListener("click", async () => {
+    if (!prepared) return;
+    await fs.addDoc(fs.collection(db, "newsletterCampaigns"), { subject: prepared.v.subject, headline: prepared.v.headline, audience: prepared.v.audience, recipients: prepared.list.length, sentBy: user.email, method: "gmail", createdAt: fs.serverTimestamp() });
+    track("newsletter_sent", { recipients: prepared.list.length });
+    status.textContent = "Logged ✓"; status.className = "form-status success";
+    form.reset(); prepared = null; $("#sendSteps").hidden = true; updatePreview();
+  });
+  $("#exportMailchimp").addEventListener("click", () => {
+    const list = audience(form.audience.value);
+    const rows = [["Email Address", "First Name", "Tags"], ...list.map(s => [s.email, s.name || "", (s.interests || []).join(",")])];
+    download(`om-newsletter-${form.audience.value}-${new Date().toISOString().slice(0, 10)}.csv`, rows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(",")).join("\n"));
   });
   form.audience.addEventListener("change", updateCount);
 }

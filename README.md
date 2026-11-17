@@ -1,6 +1,6 @@
 # OM Ltd website: v2 "Flowing Solutions"
 
-A glassmorphism website for OM Ltd. It includes **OM AI**, an assistant with an AI mode and a Human mode, a merch shop built from the OM posters, newsletters, reviews and a team dashboard, all running on Firebase.
+A clean, minimal website for OM Ltd (white and blue themes) that runs **100% on Firebase's free Spark plan**. It includes **OM AI**, an assistant with an AI mode and a Human mode, a merch shop built from the OM posters, newsletters, reviews and a team dashboard, all running on Firebase.
 
 The site works before Firebase is connected ("offline mode"). In that mode:
 - forms fall back to email or WhatsApp
@@ -39,13 +39,13 @@ White is the default theme. Visitors can switch to the blue theme with the sun/m
   - campaigns
   - reviews
   - the outbound `mail` queue
-- **Cloud Storage**: photo and PDF attachments on quotes (max 3 files, 8 MB each; the public can't read them)
 - **Authentication**: Google sign-in for the team dashboard
-- **AI Logic (Gemini)**: OM AI's cloud brain
+- **AI Logic (Gemini)**: optional cloud brain for OM AI. It's off by default; OM AI's built-in answers are free.
 - **App Check (reCAPTCHA v3)**: blocks bots and abuse of the AI and database
 - **Analytics**: tracks leads, sign-ups, OM AI usage and add-to-enquiry events
 - **Remote Config**: lets you change the announcement bar and OM AI settings without redeploying
-- **Trigger Email extension**: delivers newsletters
+- **Newsletters**: sent free from your own Gmail (Bcc), or by exporting a CSV to Mailchimp's free plan. No paid extension is needed.
+- **Photos**: customers send site photos on WhatsApp with their quote reference. Cloud Storage isn't used because it needs the paid Blaze plan.
 
 ## Setup (about 20 minutes)
 

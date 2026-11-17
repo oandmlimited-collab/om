@@ -297,8 +297,7 @@ def index():
       <label class="chip"><input class="sr-only" type="radio" name="budget" value="Above KSh 500,000">500K+</label>
      </div>
      <label class="field" style="margin-top:1rem"><span>Anything else? <span class="opt">(optional)</span></span><textarea name="details" rows="3" maxlength="5000" placeholder="Sizes, quantities, colours, site details…"></textarea></label>
-     <label class="dropzone" id="dropzone">{I["upload"]}<div><b>Add photos or plans <span class="opt">(optional)</span></b><small>Up to 3 files · JPG, PNG, WEBP or PDF · 8 MB each</small></div><input type="file" id="files" accept="image/jpeg,image/png,image/webp,application/pdf" multiple></label>
-     <div class="file-list" id="fileList"></div>
+     <div class="photo-tip">{I["whatsapp"]}<div><b>Have photos or plans?</b><small>After you send this request, tap <em>Send photos on WhatsApp</em> — your reference number is added automatically.</small></div></div>
     </fieldset>
 
     <fieldset class="wz-step" data-step="3" hidden>
@@ -333,7 +332,7 @@ def index():
    <div class="success-panel" id="quoteSuccess">
     <div class="check">{I["check"]}</div><h3>Request received!</h3>
     <p>Thank you — the OM team will contact you soon.<br>Your reference: <span class="ref-code" id="refCode">—</span></p>
-    <div class="hero-actions" style="justify-content:center;margin:0"><button class="btn btn-outline" type="button" id="newQuote">Start another quote</button><a class="btn btn-primary" id="waFollow" href="https://wa.me/254714995749" target="_blank" rel="noopener">Follow up on WhatsApp</a></div>
+    <div class="hero-actions" style="justify-content:center;margin:0"><button class="btn btn-outline" type="button" id="newQuote">Start another quote</button><a class="btn btn-primary" id="waFollow" href="https://wa.me/254714995749" target="_blank" rel="noopener">{I["whatsapp"]} Send photos on WhatsApp</a></div>
    </div>
   </div>
   <p class="quote-alt reveal">Open Mon–Sat, 8:00 am – 6:00 pm · emergencies 24 hours.<br>Prefer to talk? <a href="https://wa.me/254714995749" target="_blank" rel="noopener" data-track="whatsapp_click">WhatsApp +254 714 995 749</a> · <a href="mailto:oandmlimited@gmail.com">oandmlimited@gmail.com</a> · <a href="#" data-chat-open data-chat-mode="human">Message the team</a></p>
@@ -517,13 +516,19 @@ def admin():
   <div class="card form-card" data-admin-panel="compose" hidden>
    <div class="grid grid-2">
     <form id="composeForm" novalidate>
-     <div class="form-head"><h3>New newsletter</h3><small>Sent via the “Trigger Email” extension</small></div>
+     <div class="form-head"><h3>New newsletter</h3><small>Free — sends from your own Gmail</small></div>
      <label class="field">Audience<select name="audience"><option value="all">All active subscribers</option><option value="farm">Farm &amp; irrigation</option><option value="plumbing">Plumbing</option><option value="safety">Safety &amp; workwear</option><option value="merch">Merch drops</option></select></label>
      <label class="field">Subject *<input name="subject" required maxlength="140" placeholder="e.g. New Cyber Lime backpacks have landed"></label>
      <label class="field">Headline *<input name="headline" required maxlength="120"></label>
      <label class="field">Message *<textarea name="body" required rows="8" maxlength="6000" placeholder="Blank lines become paragraphs."></textarea></label>
      <div class="form-row"><label class="field">Button text<input name="ctaText" maxlength="40" placeholder="Shop the drop"></label><label class="field">Button link<input name="ctaUrl" type="url" maxlength="300" placeholder="https://…/merch"></label></div>
-     <div class="hero-actions" style="margin-top:.2rem"><button class="btn btn-outline" type="button" id="sendTest">Send test to me</button><button class="btn btn-primary" type="submit"><span class="spinner"></span><span class="submit-label">Send newsletter</span></button></div>
+     <div class="hero-actions" style="margin-top:.2rem"><button class="btn btn-primary" type="submit"><span class="spinner"></span><span class="submit-label">Prepare to send</span></button><button class="btn btn-outline" type="button" id="exportMailchimp">Export for Mailchimp</button></div>
+     <ol class="send-steps" id="sendSteps" hidden>
+      <li><b>Copy the recipients</b> <button class="btn btn-soft btn-sm" type="button" id="copyBcc">Copy emails</button><small id="bccInfo"></small></li>
+      <li><b>Open Gmail</b> with your subject and message filled in <a class="btn btn-soft btn-sm" id="openGmail" target="_blank" rel="noopener">Open Gmail</a></li>
+      <li><b>Paste the emails into “Bcc”</b> (never “To” — keeps subscribers private) and press Send. <small>Gmail sends up to ~500 emails a day for free; bigger lists → use “Export for Mailchimp” (free up to 500 contacts).</small></li>
+      <li><button class="btn btn-outline btn-sm" type="button" id="markSent">I've sent it — log this campaign</button></li>
+     </ol>
      <p class="form-status" id="composeStatus" role="status" aria-live="polite"></p>
     </form>
     <div><div class="form-head"><h3>Preview</h3><small id="audienceCount">—</small></div><iframe id="nlPreview" title="Newsletter preview" style="width:100%;height:600px;border:0;border-radius:12px;background:#fff"></iframe></div>

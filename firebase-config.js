@@ -22,12 +22,11 @@ export const services = {
   appCheckDebug: false,          // true only while testing on localhost
 
   analytics: true,               // uses measurementId above
-  storageUploads: true,          // quote attachments → Cloud Storage
+  storageUploads: false,         // Cloud Storage needs the paid Blaze plan — photos go via WhatsApp instead
   remoteConfig: true,            // live announcement text + OM AI switches
 
-  // OM AI cloud brain — Firebase AI Logic (Gemini Developer API).
-  // Enable in Firebase Console → AI Logic → Get started, set up App Check, then set enabled: true.
-  // While false, OM AI uses its built-in answers (and Human mode works either way).
+  // OM AI cloud brain — Firebase AI Logic (Gemini). Keep false to stay 100% free:
+  // OM AI then uses its built-in English + Kiswahili answers, and Human mode works either way.
   assistant: {
     enabled: false,
     model: "gemini-3.5-flash-lite",   // can be changed live via Remote Config key `assistant_model`

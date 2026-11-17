@@ -1,7 +1,7 @@
 // =============================================================
 // OM Ltd — 4-step quotation wizard + Kenya map (Leaflet + OpenStreetMap)
 // =============================================================
-import { firestore, storage, track } from "./firebase.js";
+import { firestore, track } from "./firebase.js";
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -62,7 +62,7 @@ export function initQuote({ toast } = {}) {
   const form = $("#quoteForm"), status = $("#formStatus");
   const steps = $$(".wz-step", form), dots = $$("[data-step-dot]", wizard);
   const back = $("#wzBack"), next = $("#wzNext"), submit = $("#wzSubmit"), count = $("#wzCount");
-  let step = 1, files = [], coords = null, extraDetails = "";
+  let step = 1, coords = null, extraDetails = "";
   const say = (t, type = "") => { status.textContent = t; status.className = "form-status" + (type ? " " + type : ""); };
   const service = () => form.querySelector('input[name="service"]:checked')?.value || "";
 
@@ -142,26 +142,8 @@ export function initQuote({ toast } = {}) {
     return Object.entries(groups).map(([k, v]) => `${k}: ${v.join(", ")}`).join("\n");
   };
 
-  // ---------- attachments ----------
-  const fileInput = $("#files"), fileList = $("#fileList"), dz = $("#dropzone"), prog = $("#uploadProgress");
-  const MAX = 3, MAX_MB = 8, OK = ["image/jpeg", "image/png", "image/webp", "application/pdf"];
-  const renderFiles = () => {
-    fileList.innerHTML = "";
-    files.forEach((f, i) => {
-      const p = document.createElement("span"); p.className = "file-pill"; p.textContent = `📎 ${f.name}`;
-      const x = document.createElement("button"); x.type = "button"; x.textContent = "×"; x.setAttribute("aria-label", `Remove ${f.name}`); x.onclick = () => { files.splice(i, 1); renderFiles(); };
-      p.appendChild(x); fileList.appendChild(p);
-    });
-  };
-  const addFiles = list => { for (const f of list) {
-    if (files.length >= MAX) { toast?.(`You can attach up to ${MAX} files.`); break; }
-    if (!OK.includes(f.type)) { toast?.(`${f.name}: use JPG, PNG, WEBP or PDF.`); continue; }
-    if (f.size > MAX_MB * 1048576) { toast?.(`${f.name} is larger than ${MAX_MB} MB.`); continue; }
-    files.push(f); } renderFiles(); };
-  fileInput.addEventListener("change", () => { addFiles(fileInput.files); fileInput.value = ""; });
-  ["dragenter", "dragover"].forEach(ev => dz.addEventListener(ev, e => { e.preventDefault(); dz.classList.add("drag"); }));
-  ["dragleave", "drop"].forEach(ev => dz.addEventListener(ev, e => { e.preventDefault(); dz.classList.remove("drag"); }));
-  dz.addEventListener("drop", e => addFiles(e.dataTransfer.files));
+  // ---------- photos: shared on WhatsApp after submitting (keeps the site on Firebase's free plan) ----------
+  const prog = $("#uploadProgress");
 
   // ---------- step 3: Kenya map ----------
   const countySel = $("#countySelect"), town = $("#townSearch"), townList = $("#townList"), pinLabel = $("#pinLabel");
@@ -268,7 +250,7 @@ export function initQuote({ toast } = {}) {
   function locationText() { return [town.value.trim(), countySel.value].filter(Boolean).join(", "); }
   function renderSummary() {
     const rows = [["Service", SHORT[service()] || "—", 1], ["Details", scopeText().replace(/\n/g, " · ") || (form.details.value.trim() ? "Described" : "—"), 2],
-      ["Location", locationText() || (coords ? "Pinned on map" : "Not given"), 3], ["Files", files.length ? `${files.length} attached` : "None", 2]];
+      ["Location", locationText() || (coords ? "Pinned on map" : "Not given"), 3]];
     $("#wzSummary").innerHTML = rows.map(([k, v, s]) => `<div><span class="k">${k}</span><span class="v"></span><button type="button" data-goto="${s}">Edit</button></div>`).join("");
     $$("#wzSummary .v").forEach((el, i) => el.textContent = rows[i][1]);
     $$("#wzSummary [data-goto]").forEach(b => b.onclick = () => show(+b.dataset.goto));
@@ -291,20 +273,9 @@ Service: ${d.service}
 Location: ${d.location || "—"}${d.coords ? `\nMap: https://www.openstreetmap.org/?mlat=${d.coords.lat}&mlon=${d.coords.lng}#map=15/${d.coords.lat}/${d.coords.lng}` : ""}
 Budget: ${d.budget || "—"}
 
-${d.details}`)}`;
+${d.details}
 
-  async function uploadAll(ref) {
-    if (!files.length) return [];
-    const s = await storage(); if (!s) throw new Error("storage-unavailable");
-    const { st, storage: bucket } = s; prog.classList.add("on");
-    const total = files.reduce((a, f) => a + f.size, 0), done = new Map();
-    return Promise.all(files.map((f, i) => new Promise((res, rej) => {
-      const r = st.ref(bucket, `quote-uploads/${ref}/${i}-${f.name.replace(/[^\w.\-]+/g, "_").slice(-80)}`);
-      const task = st.uploadBytesResumable(r, f, { contentType: f.type });
-      task.on("state_changed", snap => { done.set(i, snap.bytesTransferred); $("span", prog).style.width = (100 * [...done.values()].reduce((a, b) => a + b, 0) / total).toFixed(0) + "%"; },
-        rej, () => res({ name: f.name, path: r.fullPath, size: f.size, type: f.type }));
-    })));
-  }
+(I'll send site photos on WhatsApp: +254 714 995 749)`)}`;
 
   form.addEventListener("submit", async e => {
     e.preventDefault();
@@ -319,12 +290,10 @@ ${d.details}`)}`;
     const f = await firestore();
     if (f) {
       try {
-        let attachments = [];
-        try { attachments = await uploadAll(data.ref); } catch (err) { console.warn("[OM] upload failed", err); if (files.length) toast?.("Files couldn't upload — your request is still sent. You can share them on WhatsApp."); }
-        await f.fs.addDoc(f.fs.collection(f.db, "quotationRequests"), { ...data, attachments, status: "new", source: "om-website", page: location.pathname.slice(0, 120), userAgent: navigator.userAgent.slice(0, 200), createdAt: f.fs.serverTimestamp() });
-        track("generate_lead", { service: data.service, county: data.county, attachments: attachments.length });
+        await f.fs.addDoc(f.fs.collection(f.db, "quotationRequests"), { ...data, status: "new", source: "om-website", page: location.pathname.slice(0, 120), userAgent: navigator.userAgent.slice(0, 200), createdAt: f.fs.serverTimestamp() });
+        track("generate_lead", { service: data.service, county: data.county });
         $("#refCode").textContent = data.ref;
-        $("#waFollow").href = `${WA}?text=${encodeURIComponent(`Hello OM Ltd, I just sent quote request ${data.ref} (${SHORT[data.service]}).`)}`;
+        $("#waFollow").href = `${WA}?text=${encodeURIComponent(`Hello OM, I've sent quote request ${data.ref} (${SHORT[data.service]}${data.location ? ", " + data.location : ""}). Here are photos of the site:`)}`;
         form.hidden = true; $("#quoteSuccess").classList.add("on"); $(".wz-steps", wizard).hidden = true;
         try { sessionStorage.removeItem("om-enquiry-list"); } catch {}
       } catch (err) { console.error("[OM] quote save failed", err); say("We couldn't send this online — your email app will open with everything filled in.", "error"); location.href = mailto(data); }
@@ -332,7 +301,7 @@ ${d.details}`)}`;
     submit.disabled = false; submit.classList.remove("loading");
   });
   $("#newQuote").addEventListener("click", () => {
-    form.reset(); files = []; renderFiles(); coords = null; scopeFor = ""; marker?.remove(); marker = null; prog.classList.remove("on");
+    form.reset(); coords = null; scopeFor = ""; marker?.remove(); marker = null;
     form.hidden = false; $("#quoteSuccess").classList.remove("on"); $(".wz-steps", wizard).hidden = false; show(1);
   });
 }
