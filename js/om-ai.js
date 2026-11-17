@@ -31,7 +31,7 @@ OM offers:
 Sectors: homes, businesses and farms across Kenya.
 Opening hours: Monday–Saturday, 8:00 am – 6:00 pm. Plumbing emergencies: 24 hours (fastest via WhatsApp +254 714 995 749).
 How a job runs: 1) tell us what's happening (call, request or WhatsApp photos) 2) we assess the site (a technician inspects and measures) 3) you get a written, itemised quote before work starts 4) we do the work (qualified team, quality materials, tidy site) 5) we test and hand over (pressure- and flow-tested before we leave).
-Contacts: email ${EMAIL}, WhatsApp +254 714 995 749. Founders: John Senteu, Dickson Monyatet, Ian Ombui, Isaiah Okara.
+Contacts: email ${EMAIL}, WhatsApp +254 714 995 749. Founders: John Senteu; Eng. Dickson Monyatet (engineer); Eng. Ian A. Ombui (engineer — irrigation farming systems and client consultation); Isaiah Okara.
 Rules:
 - Be warm, concise (under 120 words), practical. Use short paragraphs or "- " bullets and **bold** sparingly. No headings.
 - Reply in the user's language (English or Kiswahili). Farmers may ask in Kiswahili — answer naturally.
@@ -114,7 +114,7 @@ const KB = [
     en: () => `OM serves homes, farms and businesses across **Kenya**. For your exact location, delivery and installation timing, the team confirms details in your quotation — just add your town in the form.\n[[quote:${SERVICES.other}]]` },
 
   { id: "founders", k: ["founder", "owner", "who runs", "who owns", "team", "ceo", "mwanzilishi", "about om", "about you", "company"],
-    en: () => `OM Ltd was founded by **John Senteu, Dickson Monyatet, Ian Ombui and Isaiah Okara**. Our promise: quality guaranteed, a trusted partner, and dedicated support. Build · Flow · Thrive 💧` },
+    en: () => `OM Ltd was founded by **John Senteu, Eng. Dickson Monyatet, Eng. Ian A. Ombui and Isaiah Okara**. Eng. Ian Ombui leads irrigation farming systems and client consultations. Our promise: quality guaranteed, a trusted partner, and dedicated support. Build · Flow · Thrive 💧` },
 
   { id: "quote", k: ["quote", "quotation", "nukuu", "order", "buy", "nunua", "purchase", "agiza", "need", "nahitaji", "want"],
     en: () => `Happy to get that started! Which best fits?\n- Plumbing\n- Construction\n- Irrigation & farm\n- Workwear & safety\n- Branded merch\n\nOr tap below and pick in the form.\n[[quote:${SERVICES.other}]]` },
