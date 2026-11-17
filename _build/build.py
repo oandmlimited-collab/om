@@ -419,7 +419,7 @@ def founders():
         ("IO", "Eng. Ian A. Ombui", "assets/founders/ian.webp", "Co-founder", "Engineer · Irrigation systems &amp; client consultation", "Designs irrigation systems for farms and guides clients from first consultation to a working system."),
         ("IO", "Isaiah Okara", "assets/founders/isaiah.webp", "Co-founder", "Water Mechanics Technologist", "New technology and modern design."),
     ]
-    av = lambda a, n, ph: f'<div class="avatar photo"><img src="{ph}?v=2" alt="{n}" width="160" height="160" loading="lazy"></div>' if ph else f'<div class="avatar">{a}</div>'
+    av = lambda a, n, ph: f'<div class="avatar photo"><img src="{ph}?v=3" alt="{n}" width="160" height="160" loading="lazy"></div>' if ph else f'<div class="avatar">{a}</div>'
     cards = "".join(f'<article class="card founder reveal" style="--d:{i*.06:.2f}s">{av(a, n, ph)}<span class="role">{r}</span><h2>{n}</h2><p>{t}</p><small>{bio}</small></article>' for i, (a, n, ph, r, t, bio) in enumerate(people))
     return head("Founders | OM Ltd", "Meet the founders of OM Ltd — John Senteu, Dickson Monyatet, Ian Ombui and Isaiah Okara.", "founders") + f'''
 <section class="page-hero"><div class="container"><span class="eyebrow">The people behind OM</span><h1>Meet our founders.</h1><p>Four founders building practical water, farm and workplace solutions — and a brand that carries beyond the job site.</p></div></section>
