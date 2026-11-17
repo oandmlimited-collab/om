@@ -414,7 +414,7 @@ def merch():
 
 def founders():
     people = [
-        ("JS", "John Senteu", "assets/founders/john.webp", "Co-founder", "Founder, OM Ltd", "Full biography coming soon."),
+        ("JS", "John Senteu", "assets/founders/john.webp", "Co-founder", "Managing Director", "Leads OM's business."),
         ("DM", "Eng. Dickson Monyatet", "assets/founders/dickson.webp", "Co-founder", "Engineer", "Full biography coming soon."),
         ("IO", "Eng. Ian A. Ombui", "assets/founders/ian.webp", "Co-founder", "Engineer · Irrigation systems &amp; client consultation", "Designs irrigation systems for farms and guides clients from first consultation to a working system."),
         ("IO", "Isaiah Okara", "assets/founders/isaiah.webp", "Co-founder", "Plumbing Technologist", "New technology and modern design."),
