@@ -415,9 +415,9 @@ def merch():
 def founders():
     people = [
         ("JS", "John Senteu", "assets/founders/john.webp", "Co-founder", "Founder, OM Ltd", "Full biography coming soon."),
-        ("DM", "Eng. Dickson Monyatet", "assets/founders/dickson.webp", "Co-founder · Engineer", "Engineer, OM Ltd", "Full biography coming soon."),
-        ("IO", "Eng. Ian A. Ombui", "assets/founders/ian.webp", "Co-founder · Engineer", "Irrigation farming systems &amp; client consultation", "Designs irrigation systems for farms and guides clients from first consultation to a working system."),
-        ("IO", "Isaiah Okara", "", "Co-founder", "Founder, OM Ltd", "Full biography coming soon."),
+        ("DM", "Eng. Dickson Monyatet", "assets/founders/dickson.webp", "Co-founder", "Engineer", "Full biography coming soon."),
+        ("IO", "Eng. Ian A. Ombui", "assets/founders/ian.webp", "Co-founder", "Engineer · Irrigation systems &amp; client consultation", "Designs irrigation systems for farms and guides clients from first consultation to a working system."),
+        ("IO", "Isaiah Okara", "assets/founders/isaiah.webp", "Co-founder", "Plumbing Technologist", "New technology and modern design."),
     ]
     av = lambda a, n, ph: f'<div class="avatar photo"><img src="{ph}" alt="{n}" width="160" height="160" loading="lazy"></div>' if ph else f'<div class="avatar">{a}</div>'
     cards = "".join(f'<article class="card founder reveal" style="--d:{i*.06:.2f}s">{av(a, n, ph)}<span class="role">{r}</span><h2>{n}</h2><p>{t}</p><small>{bio}</small></article>' for i, (a, n, ph, r, t, bio) in enumerate(people))
